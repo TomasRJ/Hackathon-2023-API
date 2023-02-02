@@ -26,26 +26,21 @@ namespace Hackathon_2023_API.Controllers
 
         // POST api/<MasterController>
         [HttpPost]
-        public async void Post([FromForm] IFormFile file)
+        public async Task<IActionResult> UploadFile([FromForm] IFormFile file)
         {
-            var httpClient = new HttpClient
+            if (file == null || file.Length == 0)
             {
-                BaseAddress = new("http://localhost:5823")
-            };
+                return BadRequest("File not found or empty.");
+            }
 
-            await using var stream = System.IO.File.OpenRead(@"C:\Hackathon2023\uploadbilleder\pexels-deva-darshan-1123972.jpg");
-            using (var multipartFormContent = new MultipartFormDataContent())
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", file.FileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
-                var fileStreamContent = new StreamContent(stream);
-                fileStreamContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpg");
+                await file.CopyToAsync(fileStream);
+            }
 
-                multipartFormContent.Add(fileStreamContent, name: "file", fileName: "billede.jpg");
-
-                using var request = new HttpRequestMessage(HttpMethod.Post, "file");
-
-                request.Content = multipartFormContent;
-                await httpClient.SendAsync(request);
-            };
+            return Ok();
         }
 
         // PUT api/<MasterController>/5
